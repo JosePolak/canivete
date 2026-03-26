@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Cotador de Moedas{% endblock %}
+
+{% block content %}
+<h2>Cotação em Tempo Real</h2>
+
+<div class="topo-cotacoes">
+    {% for m in moedas_topo %}
+    <div class="moeda-item">
+        <strong>{{ m.nome }}</strong>
+        <span class="valor-moeda">R$ {{ m.valor }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+<hr>
+
+<section class="conversor">
+    <h3>Calcular Conversão</h3>
+    <form action="/converter" method="POST" class="form-conversao">
+        <div class="input-group">
+            <label for="valor">Valor:</label>
+            <input type="number" step="0.01" name="valor" id="valor" placeholder="Ex: 100,00" required>
+        </div>
+
+        <div class="input-group">
+            <label for="direcao">Sentido:</label>
+            <select name="direcao" id="direcao">
+                <option value="brl_to_ext">De Real para Estrangeira</option>
+                <option value="ext_to_brl">De Estrangeira para Real</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="moeda">Moeda:</label>
+            <select name="moeda" id="moeda">
+                {% for m in moedas_todas %}
+                <option value="{{ m.valor_num }}">{{ m.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn-calcular">Calcular</button>
+    </form>
+
+    {% if resultado %}
+    <div class="resultado-box">
+        <h4>Resultado:</h4>
+        <p>{{ mensagem_resultado }}</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

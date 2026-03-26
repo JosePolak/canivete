@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canivete - {% block title %}{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="container">
+            <h1 class="logo">🛠️ Canivete</h1>
+
+            <button class="menu-toggle" id="menu-btn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav id="nav-menu">
+                <ul class="nav-links">
+                    <li><a href="#">Loterias</a></li>
+                    <li><a href="#">CEP</a></li>
+                    <li><a href="/">Moedas</a></li>
+                    <li><a href="#">Medidas</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 Canivete Multiferramentas - Desenvolvido em Python/Flask</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>
