@@ -18,28 +18,47 @@
 
 <section class="conversor">
     <h3>Calcular Conversão</h3>
-    <form action="/converter" method="POST" class="form-conversao">
+    <form action="/converter" id="form-conversor" method="POST" class="form-conversao">
+
         <div class="input-group">
             <label for="valor">Valor:</label>
-            <input type="number" step="0.01" name="valor" id="valor" placeholder="Ex: 100,00" required>
+            <input type="number" step="0.01" name="valor" id="valor" placeholder="Ex: 100,00"
+                value="{{ valor_post if valor_post else '' }}" required>
         </div>
 
         <div class="input-group">
-            <label for="direcao">Sentido:</label>
-            <select name="direcao" id="direcao">
-                <option value="brl_to_ext">De Real para Estrangeira</option>
-                <option value="ext_to_brl">De Estrangeira para Real</option>
+            <label for="moeda_origem">De:</label>
+            <select name="moeda_origem" id="moeda_origem">
+                <option value="1.0|Real|BRL" {{ 'selected' if moeda_origem_post=='BRL' }}>
+                    Real (BRL)
+                </option>
+                {% for m in moedas_todas %}
+                <option value="{{ m.valor_num }}|{{ m.nome }}|{{ m.codigo }}" {{ 'selected' if
+                    m.codigo==moeda_origem_post }}>
+                    {{ m.nome }} ({{ m.codigo }})
+                </option>
+                {% endfor %}
             </select>
         </div>
 
+        <div class="swap-container" style="display: flex; align-items: flex-end; padding-bottom: 5px;">
+            <button type="button" id="btn-inverter" class="btn-swap" title="Inverter Moedas">
+                🔄
+            </button>
+        </div>
+
         <div class="input-group">
-            <label for="moeda">Moeda:</label>
-            <select name="moeda_data" id="moeda">
+            <label for="moeda_destino">Para:</label>
+            <select name="moeda_destino" id="moeda_destino">
                 {% for m in moedas_todas %}
-                    <option value="{{ m.valor_num }}|{{ m.nome }}|{{ m.codigo }}">
-                        {{ m.nome }} ({{ m.codigo }})
-                    </option>
+                <option value="{{ m.valor_num }}|{{ m.nome }}|{{ m.codigo }}" {{ 'selected' if
+                    m.codigo==moeda_destino_post or (not moeda_destino_post and m.codigo=='USD' ) }}>
+                    {{ m.nome }} ({{ m.codigo }})
+                </option>
                 {% endfor %}
+                <option value="1.0|Real|BRL" {{ 'selected' if moeda_destino_post=='BRL' }}>
+                    Real (BRL)
+                </option>
             </select>
         </div>
 
@@ -53,4 +72,8 @@
     </div>
     {% endif %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cotador.js') }}"></script>
 {% endblock %}

@@ -14,18 +14,16 @@ SIMBOLOS = {
     "CAD": "C$",
     "JPY": "¥",
     "CHF": "Fr",
+    "BRL": "R$",
 }
 
-# Configura o padrão brasileiro para números e moedas
 try:
     locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 except Exception:
-    # Caso locale não esteja instalado, usa o padrão
     locale.setlocale(locale.LC_ALL, "")
 
 
 def buscar_dados_api():
-    """Função auxiliar para evitar repetição de código"""
     moedas_busca = "USD-BRL,EUR-BRL,BTC-BRL,GBP-BRL,ARS-BRL,CAD-BRL,JPY-BRL,CHF-BRL"
     url = f"https://economia.awesomeapi.com.br/last/{moedas_busca}"
     dados = requests.get(url).json()
@@ -33,10 +31,8 @@ def buscar_dados_api():
     lista_topo = []
     lista_completa = []
 
-    for chave, info in dados.items():
+    for _, info in dados.items():
         valor_venda = float(info["bid"])
-
-        # Formata o valor com separador de milhar (.) e decimal (,)
         valor_formatado = locale.format_string("%.2f", valor_venda, grouping=True)
 
         moeda_obj = {
@@ -45,13 +41,11 @@ def buscar_dados_api():
             "valor_num": valor_venda,
             "codigo": info["code"],
         }
-
         lista_completa.append(moeda_obj)
         if info["code"] in ["USD", "EUR", "BTC"]:
             lista_topo.append(moeda_obj)
 
-    lista_completa = sorted(lista_completa, key=lambda x: x["nome"])
-    return lista_topo, lista_completa
+    return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
 
 
 @app.route("/")
@@ -62,46 +56,58 @@ def home():
 
 @app.route("/converter", methods=["POST"])
 def converter():
-    # 1. Captura e separa os dados enviados
-    moeda_info = request.form.get("moeda_data", "1|Moeda|BRL")
-    preco_moeda, nome_moeda, codigo_moeda = moeda_info.split("|")
-    preco_moeda = float(preco_moeda)
+    # 1. Captura Moeda de Origem
+    origem_raw = request.form.get("moeda_origem", "1.0|Real|BRL")
+    v_origem, n_origem, c_origem = origem_raw.split("|")
+    v_origem = float(v_origem)
 
-    valor_input = float(request.form.get("valor", 0))
-    direcao = request.form.get("direcao")
+    # 2. Captura Moeda de Destino
+    destino_raw = request.form.get("moeda_destino", "1.0|Real|BRL")
+    v_destino, n_destino, c_destino = destino_raw.split("|")
+    v_destino = float(v_destino)
 
-    # 2. Busca o símbolo (usa $ como padrão se não encontrar no dicionário)
-    simbolo = SIMBOLOS.get(codigo_moeda, "$")
+    # 3. Captura Valor
+    try:
+        valor_raw = request.form.get("valor", "0")
+        valor_input = float(valor_raw) if valor_raw.strip() else 0.0
+    except ValueError:
+        valor_input = 0.0
 
-    # 3. Formatação Brasileira (Locale)
-    val_in_fmt = locale.format_string("%.2f", valor_input, grouping=True)
+    # 4. Lógica de Conversão (Arbitragem via Real)
+    # Primeiro: converte o valor de entrada para Reais
+    valor_em_reais = valor_input * v_origem
+    # Segundo: converte de Reais para a moeda de destino
+    resultado_num = valor_em_reais / v_destino
 
-    if direcao == "brl_to_ext":
-        res_num = valor_input / preco_moeda
-        res_fmt = locale.format_string(
-            "%.8f" if codigo_moeda == "BTC" else "%.2f", res_num, grouping=True
-        )
+    # 5. Formatação de Símbolos e Mensagem
+    s_origem = SIMBOLOS.get(c_origem, "$")
+    s_destino = SIMBOLOS.get(c_destino, "$")
 
-        msg = f"Com R$ {val_in_fmt} (Real), você compra {simbolo} {res_fmt} ({nome_moeda.title()})."
-    else:
-        res_num = valor_input * preco_moeda
-        res_fmt = locale.format_string("%.2f", res_num, grouping=True)
+    fmt_in = "%.8f" if c_origem == "BTC" else "%.2f"
+    fmt_out = "%.8f" if c_destino == "BTC" else "%.2f"
 
-        # Formata a entrada (moeda estrangeira) - 8 casas se for BTC
-        val_in_fmt_ajustado = locale.format_string(
-            "%.8f" if codigo_moeda == "BTC" else "%.2f", valor_input, grouping=True
-        )
+    val_in_fmt = locale.format_string(fmt_in, valor_input, grouping=True)
+    res_out_fmt = locale.format_string(fmt_out, resultado_num, grouping=True)
 
-        msg = f"Para comprar {simbolo} {val_in_fmt_ajustado} ({nome_moeda.title()}), você precisará de R$ {res_fmt} (Real)."
+    msg = f"{s_origem} {val_in_fmt} ({n_origem}) equivalem a {s_destino} {res_out_fmt} ({n_destino})."
 
     topo, todas = buscar_dados_api()
+
+    valor_para_input = locale.format_string("%.2f", valor_input)
+    if c_origem == "BTC":
+        valor_para_input = "{:.8f}".format(valor_input)
+    else:
+        valor_para_input = "{:.2f}".format(valor_input)
 
     return render_template(
         "cotador.html",
         moedas_topo=topo,
         moedas_todas=todas,
-        resultado=True,  # Ativa o box
+        resultado=True,
         mensagem_resultado=msg,
+        valor_post=valor_para_input,  # Resolve as casas decimais após a vírgula
+        moeda_origem_post=c_origem,
+        moeda_destino_post=c_destino,
     )
 
 

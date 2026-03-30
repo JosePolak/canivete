@@ -224,3 +224,25 @@ img {
     border-left: 5px solid var(--accent-color);
     border-radius: 5px;
 }
+
+.input-group-flex {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.input-group-flex select {
+    flex: 1;
+    min-width: 0;
+    /* Isso impede que o select 'esconda' o botão */
+}
+
+.btn-swap {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+}
