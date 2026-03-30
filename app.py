@@ -5,6 +5,17 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
+SIMBOLOS = {
+    "USD": "U$",
+    "EUR": "€",
+    "GBP": "£",
+    "BTC": "₿",
+    "ARS": "$",
+    "CAD": "C$",
+    "JPY": "¥",
+    "CHF": "Fr",
+}
+
 # Configura o padrão brasileiro para números e moedas
 try:
     locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
@@ -51,22 +62,37 @@ def home():
 
 @app.route("/converter", methods=["POST"])
 def converter():
+    # 1. Captura e separa os dados enviados
+    moeda_info = request.form.get("moeda_data", "1|Moeda|BRL")
+    preco_moeda, nome_moeda, codigo_moeda = moeda_info.split("|")
+    preco_moeda = float(preco_moeda)
+
     valor_input = float(request.form.get("valor", 0))
-    preco_moeda = float(request.form.get("moeda", 1))
     direcao = request.form.get("direcao")
 
-    # Busca o nome da moeda selecionada para a mensagem (opcional)
-    # Aqui pode-se passar o nome da moeda pelo form também se se quiser facilitar
+    # 2. Busca o símbolo (usa $ como padrão se não encontrar no dicionário)
+    simbolo = SIMBOLOS.get(codigo_moeda, "$")
+
+    # 3. Formatação Brasileira (Locale)
+    val_in_fmt = locale.format_string("%.2f", valor_input, grouping=True)
 
     if direcao == "brl_to_ext":
-        # Quanto de moeda estrangeira eu compro com X reais? (Divisão)
-        resultado_num = valor_input / preco_moeda
-        # simbolo = ""  # Aqui você pode mapear o símbolo da moeda se quiser
-        msg = f"Com {locale.format_string('%.2f', valor_input, grouping=True)} Reais, você compra {locale.format_string('%.2f', resultado_num, grouping=True)} na moeda selecionada."
+        res_num = valor_input / preco_moeda
+        res_fmt = locale.format_string(
+            "%.8f" if codigo_moeda == "BTC" else "%.2f", res_num, grouping=True
+        )
+
+        msg = f"Com R$ {val_in_fmt} (Real), você compra {simbolo} {res_fmt} ({nome_moeda.title()})."
     else:
-        # Quanto custa X de moeda estrangeira em reais? (Multiplicação)
-        resultado_num = valor_input * preco_moeda
-        msg = f"Para comprar {locale.format_string('%.2f', valor_input, grouping=True)} na moeda selecionada, você precisará de R$ {locale.format_string('%.2f', resultado_num, grouping=True)}."
+        res_num = valor_input * preco_moeda
+        res_fmt = locale.format_string("%.2f", res_num, grouping=True)
+
+        # Formata a entrada (moeda estrangeira) - 8 casas se for BTC
+        val_in_fmt_ajustado = locale.format_string(
+            "%.8f" if codigo_moeda == "BTC" else "%.2f", valor_input, grouping=True
+        )
+
+        msg = f"Para comprar {simbolo} {val_in_fmt_ajustado} ({nome_moeda.title()}), você precisará de R$ {res_fmt} (Real)."
 
     topo, todas = buscar_dados_api()
 

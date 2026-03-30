@@ -34,9 +34,11 @@
 
         <div class="input-group">
             <label for="moeda">Moeda:</label>
-            <select name="moeda" id="moeda">
+            <select name="moeda_data" id="moeda">
                 {% for m in moedas_todas %}
-                <option value="{{ m.valor_num }}">{{ m.nome }}</option>
+                    <option value="{{ m.valor_num }}|{{ m.nome }}|{{ m.codigo }}">
+                        {{ m.nome }} ({{ m.codigo }})
+                    </option>
                 {% endfor %}
             </select>
         </div>
