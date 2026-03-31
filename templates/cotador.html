@@ -72,6 +72,50 @@
     </div>
     {% endif %}
 </section>
+
+<hr>
+
+<section class="historico">
+    <h3>Últimas 10 Conversões</h3>
+    <div class="tabela-container">
+        <table class="tabela-historico">
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Origem</th>
+                    <th>Destino</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in historico %}
+                <tr>
+                    <td>{{ item.data_hora.strftime('%d/%m/%Y %H:%M') }}</td>
+
+                    <td>
+                        {{ "{:,.2f}".format(item.valor_entrada).replace(',', 'v').replace('.', ',').replace('v', '.') }}
+                        {{ item.moeda_origem }}
+                    </td>
+
+                    <td>{{ item.moeda_destino }}</td>
+
+                    <td>
+                        <strong>
+                            {{ "{:,.2f}".format(item.valor_saida).replace(',', 'v').replace('.', ',').replace('v', '.')
+                            }}
+                        </strong>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center;">Nenhuma conversão registrada ainda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
 {% endblock %}
 
 {% block scripts %}

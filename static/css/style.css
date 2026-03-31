@@ -246,3 +246,27 @@ img {
     border-radius: 4px;
     cursor: pointer;
 }
+
+.tabela-container {
+    overflow-x: auto;
+    /* Garante que funcione no celular */
+    margin-top: 20px;
+}
+
+.tabela-historico {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.tabela-historico th,
+.tabela-historico td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.tabela-historico th {
+    background-color: #f8f9fa;
+    color: var(--primary-color);
+}
