@@ -38,7 +38,7 @@ O primeiro módulo implementado é um conversor de moedas inteligente que consom
 
    Clique em ctrl + http://127.0.0.1:5000
 
-## 🗺️ Roadmap (próximos passos, não necessariamente na ordem apresentada)
+## 🗺️ Roadmap (próximos passos, não necessariamente nessa ordem)
 
 - [x] **Cotador de Moedas:** Cotações em tempo real e histórico de conversões.
 - [ ] **Loterias:** Consulta de resultados da Caixa e gerador de apostas.
