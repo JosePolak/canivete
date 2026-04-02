@@ -22,7 +22,7 @@
 
         <div class="input-group">
             <label for="valor">Valor:</label>
-            <input type="number" step="0.01" name="valor" id="valor" placeholder="Ex: 100,00"
+            <input type="text" name="valor" id="valor" placeholder="Ex: 100,00" inputmode="decimal"
                 value="{{ valor_post if valor_post else '' }}" required>
         </div>
 
@@ -76,7 +76,13 @@
 <hr>
 
 <section class="historico">
-    <h3>Últimas 10 Conversões</h3>
+    <div class="historico-header"
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px;">
+        <h3 style="margin: 0;">Últimas 10 Conversões</h3>
+        <form action="{{ url_for('moedas.limpar_historico') }}" method="POST" style="margin: 0;"> <button type="submit"
+                class="btn-limpar">Limpar Histórico</button>
+        </form>
+    </div>
     <div class="tabela-container">
         <table class="tabela-historico">
             <thead>

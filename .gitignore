@@ -1,18 +1,45 @@
-# Python
+# --- Python ---
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
 venv/
-.venv
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Flask e Variáveis de Ambiente
+# --- Banco de Dados ---
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Flask & Ambiente ---
+.target
 .flaskenv
 .env
+.env.secret
+.venv
 
-# Editor (VS Code)
+# --- VS Code & IDEs ---
 .vscode/
+.idea/
+*.swp
+*.swo
 
-# Distribuição / Pacotes
-instance/
+# --- Sistema (Ubuntu/Linux) ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# --- Distribuição ---
 dist/
 build/
 *.egg-info/

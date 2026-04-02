@@ -1,7 +1,7 @@
 import locale
 
 import requests
-from flask import Blueprint, render_template, request
+from flask import Blueprint, redirect, render_template, request, url_for
 
 from extensions import db
 from models import Historico
@@ -76,7 +76,9 @@ def converter():
 
     try:
         valor_raw = request.form.get("valor", "0")
-        valor_input = float(valor_raw) if valor_raw.strip() else 0.0
+        # Remove pontos de milhar e troca a vírgula decimal por ponto para o Python entender
+        valor_limpo = valor_raw.replace(".", "").replace(",", ".")
+        valor_input = float(valor_limpo) if valor_limpo.strip() else 0.0
     except ValueError:
         valor_input = 0.0
 
@@ -109,9 +111,9 @@ def converter():
     historico = Historico.query.order_by(Historico.data_hora.desc()).limit(10).all()
 
     if c_origem == "BTC":
-        valor_para_input = "{:.8f}".format(valor_input)
+        valor_para_input = locale.format_string("%.8f", valor_input, grouping=False)
     else:
-        valor_para_input = "{:.2f}".format(valor_input)
+        valor_para_input = locale.format_string("%.2f", valor_input, grouping=False)
 
     return render_template(
         "cotador.html",
@@ -124,3 +126,17 @@ def converter():
         moeda_origem_post=c_origem,
         moeda_destino_post=c_destino,
     )
+
+
+@bp_moedas.route("/limpar", methods=["POST"])
+def limpar_historico():
+    try:
+        # Deleta todos os registros da tabela Historico no banco de dados
+        db.session.query(Historico).delete()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erro ao limpar histórico: {e}")
+
+    # Redireciona para a rota 'home' deste blueprint (moedas)
+    return redirect(url_for("moedas.home"))
