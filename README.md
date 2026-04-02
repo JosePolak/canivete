@@ -39,11 +39,12 @@ O primeiro módulo implementado é um conversor de moedas inteligente que consom
    Clique em ctrl + http://127.0.0.1:5000
 
 ## 🗺️ Roadmap (próximos passos, não necessariamente na ordem apresentada)
-O projeto "Canivete" será expandido com os seguintes módulos:
-   [ ] Loterias: Consulta de resultados da Caixa e gerador de apostas.
-   [ ] CEP: Busca de endereços via API.
-   [ ] Medidas: Conversor de unidades (peso, comprimento, temperatura).
-   [ ] IMC: Calculadora de Índice de Massa Corporal.
+
+- [x] **Cotador de Moedas:** Cotações em tempo real e histórico de conversões.
+- [ ] **Loterias:** Consulta de resultados da Caixa e gerador de apostas.
+- [ ] **CEP:** Busca de endereços via API.
+- [ ] **Medidas:** Conversor de unidades (peso, comprimento, temperatura).
+- [ ] **IMC:** Calculadora de Índice de Massa Corporal.
 
 ## 🎯 Objetivo do Projeto
 Este projeto foi desenvolvido com foco estritamente didático e técnico. O objetivo central é a aplicação de boas práticas de desenvolvimento web, tais como:
