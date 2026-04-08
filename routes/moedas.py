@@ -29,56 +29,51 @@ SIMBOLOS = {
 
 def buscar_dados_api():
     url = "https://economia.awesomeapi.com.br/json/all"
-    headers = {"User-Agent": "Mozilla/5.0"}
+
+    lista_topo = []
+    lista_completa = []
 
     try:
-        response = requests.get(url, headers=headers, timeout=5)
-        dados = response.json()
+        # Aumentamos o timeout para 15 segundos
+        response = requests.get(url, timeout=15)
 
-        lista_topo = []
-        lista_completa = []
-        moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
+        if response.status_code == 200:
+            dados = response.json()
+            moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
 
-        for codigo, info in dados.items():
-            if codigo in moedas_alvo:
-                valor_venda = float(info["bid"])
-                # Formatação manual sem locale
-                valor_formatado = (
-                    f"{valor_venda:,.2f}".replace(",", "X")
-                    .replace(".", ",")
-                    .replace("X", ".")
-                )
+            for codigo, info in dados.items():
+                if codigo in moedas_alvo:
+                    valor_venda = float(info["bid"])
+                    # Formatação manual
+                    valor_formatado = (
+                        f"{valor_venda:,.2f}".replace(",", "X")
+                        .replace(".", ",")
+                        .replace("X", ".")
+                    )
 
-                moeda_obj = {
-                    "nome": info["name"].split("/")[0],
-                    "valor": valor_formatado,
-                    "valor_num": valor_venda,
-                    "codigo": codigo,
-                }
-                lista_completa.append(moeda_obj)
-                if codigo in ["USD", "EUR", "BTC"]:
-                    lista_topo.append(moeda_obj)
-
-        return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
+                    moeda_obj = {
+                        "nome": info["name"].split("/")[0],
+                        "valor": valor_formatado,
+                        "valor_num": valor_venda,
+                        "codigo": codigo,
+                    }
+                    lista_completa.append(moeda_obj)
+                    if codigo in ["USD", "EUR", "BTC"]:
+                        lista_topo.append(moeda_obj)
+        else:
+            print(f"API retornou status: {response.status_code}")
 
     except Exception as e:
-        # SE A API FALHAR, O SITE NÃO FICA VAZIO:
-        print(f"DEBUG: Falha na API. Usando dados de reserva. Erro: {e}")
-        reserva = [
-            {
-                "nome": "Dólar (API Offline)",
-                "valor": "0,00",
-                "valor_num": 0.0,
-                "codigo": "USD",
-            },
-            {
-                "nome": "Euro (API Offline)",
-                "valor": "0,00",
-                "valor_num": 0.0,
-                "codigo": "EUR",
-            },
-        ]
-        return reserva, reserva
+        print(f"Erro crítico na função: {e}")
+
+    # GARANTIA: Se as listas estiverem vazias por qualquer motivo,
+    # enviamos dados manuais para o site não ficar em branco.
+    if not lista_topo:
+        lista_topo = [{"nome": "Dólar", "valor": "---", "codigo": "USD"}]
+    if not lista_completa:
+        lista_completa = [{"nome": "Dólar", "valor": "---", "codigo": "USD"}]
+
+    return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
 
 
 @bp_moedas.route("/")
