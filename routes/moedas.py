@@ -28,31 +28,30 @@ SIMBOLOS = {
 
 
 def buscar_dados_api():
-    moedas_busca = "USD-BRL,EUR-BRL,BTC-BRL,GBP-BRL,ARS-BRL,CAD-BRL,JPY-BRL,CHF-BRL"
-    url = f"https://economia.awesomeapi.com.br/last/{moedas_busca}"
+    # Usando endpoint de JSON simples (mais leve e menos bloqueado)
+    url = "https://economia.awesomeapi.com.br/json/all"
 
-    # Adicionando um Header para simular um navegador
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=5)
         dados = response.json()
-
-        if not isinstance(dados, dict):
-            print(f"Erro API: Retorno não é dicionário: {dados}")  # Log para o Render
-            return [], []
     except Exception as e:
-        print(f"Erro na requisição: {e}")  # Log para o Render
+        print(f"Erro na conexao: {e}")
         return [], []
 
     lista_topo = []
     lista_completa = []
 
-    for chave, info in dados.items():
-        if isinstance(info, dict) and "bid" in info:
+    # Moedas a exibir
+    foco = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
+
+    for codigo, info in dados.items():
+        if codigo in foco:
             valor_venda = float(info["bid"])
+            # Formatação manual para evitar erro de Locale no Linux do Render
             valor_formatado = (
                 f"{valor_venda:,.2f}".replace(",", "X")
                 .replace(".", ",")
@@ -63,14 +62,14 @@ def buscar_dados_api():
                 "nome": info["name"].split("/")[0],
                 "valor": valor_formatado,
                 "valor_num": valor_venda,
-                "codigo": info["code"],
+                "codigo": codigo,
             }
 
             lista_completa.append(moeda_obj)
-
-            if info["code"] in ["USD", "EUR", "BTC"]:
+            if codigo in ["USD", "EUR", "BTC"]:
                 lista_topo.append(moeda_obj)
 
+    # Adiciona Real manualmente para o seletor (opcional, se ja no estiver no HTML)
     return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
 
 
