@@ -29,7 +29,6 @@ SIMBOLOS = {
 
 def buscar_dados_api():
     url = "https://economia.awesomeapi.com.br/json/all"
-
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     }
@@ -37,41 +36,37 @@ def buscar_dados_api():
     try:
         response = requests.get(url, headers=headers, timeout=10)
         dados = response.json()
-
         if not isinstance(dados, dict):
             return [], []
-    except Exception as e:
-        print(f"Erro na conexao: {e}")
+    except Exception:
         return [], []
 
     lista_topo = []
     lista_completa = []
-
-    # Moedas a exibir no projeto
     moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
 
     for codigo, info in dados.items():
         if codigo in moedas_alvo:
-            valor_venda = float(info["bid"])
+            try:
+                valor_venda = float(info["bid"])
+                # FORMATAÇÃO MANUAL: Evita o erro de locale no servidor
+                valor_formatado = (
+                    f"{valor_venda:,.2f}".replace(",", "X")
+                    .replace(".", ",")
+                    .replace("X", ".")
+                )
 
-            # Formatação manual (Segurança contra falta de Locale pt_BR no Render)
-            valor_formatado = (
-                f"{valor_venda:,.2f}".replace(",", "X")
-                .replace(".", ",")
-                .replace("X", ".")
-            )
-
-            moeda_obj = {
-                "nome": info["name"].split("/")[0],
-                "valor": valor_formatado,
-                "valor_num": valor_venda,
-                "codigo": codigo,  # No endpoint /all, o código é a chave (ex: "USD")
-            }
-
-            lista_completa.append(moeda_obj)
-
-            if codigo in ["USD", "EUR", "BTC"]:
-                lista_topo.append(moeda_obj)
+                moeda_obj = {
+                    "nome": info["name"].split("/")[0],
+                    "valor": valor_formatado,
+                    "valor_num": valor_venda,
+                    "codigo": codigo,
+                }
+                lista_completa.append(moeda_obj)
+                if codigo in ["USD", "EUR", "BTC"]:
+                    lista_topo.append(moeda_obj)
+            except (KeyError, ValueError):
+                continue
 
     return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
 
