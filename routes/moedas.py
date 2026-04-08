@@ -1,10 +1,13 @@
 import locale
+import os
 
 import requests
 from flask import Blueprint, redirect, render_template, request, url_for
 
 from extensions import db
 from models import Historico
+
+chave = os.getenv("HG_API_KEY")
 
 bp_moedas = Blueprint("moedas", __name__)
 
@@ -28,50 +31,59 @@ SIMBOLOS = {
 
 
 def buscar_dados_api():
-    url = "https://economia.awesomeapi.com.br/json/all"
+    chave = "372c713e"
+    url = f"https://api.hgbrasil.com/finance?key={chave}"
 
     lista_topo = []
     lista_completa = []
 
     try:
-        # Aumentamos o timeout para 15 segundos
-        response = requests.get(url, timeout=15)
+        response = requests.get(url, timeout=10)
+        dados = response.json()
 
-        if response.status_code == 200:
-            dados = response.json()
-            moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
+        # Na HG Brasil, dados ficam em results -> currencies
+        currencies = dados.get("results", {}).get("currencies", {})
 
-            for codigo, info in dados.items():
-                if codigo in moedas_alvo:
-                    valor_venda = float(info["bid"])
-                    # Formatação manual
-                    valor_formatado = (
-                        f"{valor_venda:,.2f}".replace(",", "X")
-                        .replace(".", ",")
-                        .replace("X", ".")
-                    )
+        # Moedas a exibir
+        moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
 
-                    moeda_obj = {
-                        "nome": info["name"].split("/")[0],
-                        "valor": valor_formatado,
-                        "valor_num": valor_venda,
-                        "codigo": codigo,
-                    }
-                    lista_completa.append(moeda_obj)
-                    if codigo in ["USD", "EUR", "BTC"]:
-                        lista_topo.append(moeda_obj)
-        else:
-            print(f"API retornou status: {response.status_code}")
+        for codigo in moedas_alvo:
+            if codigo in currencies:
+                info = currencies[codigo]
+                # HG: 'buy' para valor atual
+                valor_venda = float(info.get("buy", 0))
+
+                # Formatação manual para garantir funcionamento no Render
+                valor_formatado = (
+                    f"{valor_venda:,.2f}".replace(",", "X")
+                    .replace(".", ",")
+                    .replace("X", ".")
+                )
+
+                moeda_obj = {
+                    "nome": info.get("name"),
+                    "valor": valor_formatado,
+                    "valor_num": valor_venda,
+                    "codigo": codigo,
+                }
+
+                lista_completa.append(moeda_obj)
+
+                if codigo in ["USD", "EUR", "BTC"]:
+                    lista_topo.append(moeda_obj)
 
     except Exception as e:
-        print(f"Erro crítico na função: {e}")
-
-    # GARANTIA: Se as listas estiverem vazias por qualquer motivo,
-    # enviamos dados manuais para o site não ficar em branco.
-    if not lista_topo:
-        lista_topo = [{"nome": "Dólar", "valor": "---", "codigo": "USD"}]
-    if not lista_completa:
-        lista_completa = [{"nome": "Dólar", "valor": "---", "codigo": "USD"}]
+        print(f"Erro na HG Brasil: {e}")
+        # Retorna "Indisponível" em vez de um número falso
+        reserva = [
+            {
+                "nome": "Serviço Indisponível",
+                "valor": "---",
+                "valor_num": 0.0,
+                "codigo": "ERR",
+            }
+        ]
+        return reserva, reserva
 
     return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
 
