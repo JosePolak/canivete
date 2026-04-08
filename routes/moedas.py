@@ -28,35 +28,33 @@ SIMBOLOS = {
 
 
 def buscar_dados_api():
-    # Endpoint mais estável para servidores como o Render
     url = "https://economia.awesomeapi.com.br/json/all"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     }
 
     try:
-        # Timeout curto para o site não ficar travado se a API demorar
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers, timeout=10)
         dados = response.json()
 
         if not isinstance(dados, dict):
             return [], []
     except Exception as e:
-        print(f"Erro na conexão com API: {e}")
+        print(f"Erro na conexao: {e}")
         return [], []
 
     lista_topo = []
     lista_completa = []
 
-    # Moedas a exibir
-    moedas_desejadas = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
+    # Moedas a exibir no projeto
+    moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
 
     for codigo, info in dados.items():
-        if codigo in moedas_desejadas:
+        if codigo in moedas_alvo:
             valor_venda = float(info["bid"])
 
-            # Formatação manual (Segurança contra erro de Locale no Render)
+            # Formatação manual (Segurança contra falta de Locale pt_BR no Render)
             valor_formatado = (
                 f"{valor_venda:,.2f}".replace(",", "X")
                 .replace(".", ",")
@@ -67,7 +65,7 @@ def buscar_dados_api():
                 "nome": info["name"].split("/")[0],
                 "valor": valor_formatado,
                 "valor_num": valor_venda,
-                "codigo": codigo,
+                "codigo": codigo,  # No endpoint /all, o código é a chave (ex: "USD")
             }
 
             lista_completa.append(moeda_obj)
@@ -75,7 +73,6 @@ def buscar_dados_api():
             if codigo in ["USD", "EUR", "BTC"]:
                 lista_topo.append(moeda_obj)
 
-    # Ordena por nome para os seletores ficarem organizados
     return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
 
 
