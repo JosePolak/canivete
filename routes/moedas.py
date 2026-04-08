@@ -28,30 +28,35 @@ SIMBOLOS = {
 
 
 def buscar_dados_api():
-    # Usando endpoint de JSON simples (mais leve e menos bloqueado)
+    # Endpoint mais estável para servidores como o Render
     url = "https://economia.awesomeapi.com.br/json/all"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     }
 
     try:
+        # Timeout curto para o site não ficar travado se a API demorar
         response = requests.get(url, headers=headers, timeout=5)
         dados = response.json()
+
+        if not isinstance(dados, dict):
+            return [], []
     except Exception as e:
-        print(f"Erro na conexao: {e}")
+        print(f"Erro na conexão com API: {e}")
         return [], []
 
     lista_topo = []
     lista_completa = []
 
     # Moedas a exibir
-    foco = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
+    moedas_desejadas = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
 
     for codigo, info in dados.items():
-        if codigo in foco:
+        if codigo in moedas_desejadas:
             valor_venda = float(info["bid"])
-            # Formatação manual para evitar erro de Locale no Linux do Render
+
+            # Formatação manual (Segurança contra erro de Locale no Render)
             valor_formatado = (
                 f"{valor_venda:,.2f}".replace(",", "X")
                 .replace(".", ",")
@@ -66,10 +71,11 @@ def buscar_dados_api():
             }
 
             lista_completa.append(moeda_obj)
+
             if codigo in ["USD", "EUR", "BTC"]:
                 lista_topo.append(moeda_obj)
 
-    # Adiciona Real manualmente para o seletor (opcional, se ja no estiver no HTML)
+    # Ordena por nome para os seletores ficarem organizados
     return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
 
 
