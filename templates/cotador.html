@@ -18,7 +18,7 @@
 
 <section class="conversor">
     <h3>Calcular Conversão</h3>
-    <form action="/converter" id="form-conversor" method="POST" class="form-conversao">
+    <form action="{{ url_for('moedas.efetuar_conversao') }}" id="form-conversor" method="POST" class="form-conversao">
 
         <div class="input-group">
             <label for="valor">Valor:</label>

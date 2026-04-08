@@ -22,10 +22,10 @@
 
             <nav id="nav-menu">
                 <ul class="nav-links">
-                    <li><a href="#">Loterias</a></li>
-                    <li><a href="#">CEP</a></li>
-                    <li><a href="/">Moedas</a></li>
-                    <li><a href="#">Medidas</a></li>
+                    <li><a href="{{ url_for('moedas.home') }}">Moedas</a></li>
+                    <li><a href="{{ url_for('medidas.home') }}">Medidas</a></li>
+                    <li><a href="{{ url_for('cep.home') }}">CEP</a></li>
+                    <li><a href="{{ url_for('loterias.home') }}">Loterias</a></li>
                 </ul>
             </nav>
         </div>

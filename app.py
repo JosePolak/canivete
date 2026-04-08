@@ -3,6 +3,9 @@ import os
 from flask import Flask
 
 from extensions import db
+from routes.cep import bp_cep
+from routes.loterias import bp_loterias
+from routes.medidas import bp_medidas
 from routes.moedas import bp_moedas
 
 
@@ -17,8 +20,11 @@ def create_app():
 
     db.init_app(app)
 
-    # Registra o blueprint das moedas
+    # Registra os blueprints
     app.register_blueprint(bp_moedas)
+    app.register_blueprint(bp_loterias)
+    app.register_blueprint(bp_cep)
+    app.register_blueprint(bp_medidas)
 
     with app.app_context():
         db.create_all()

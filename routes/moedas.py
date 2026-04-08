@@ -65,7 +65,7 @@ def home():
 
 
 @bp_moedas.route("/converter", methods=["POST"])
-def converter():
+def efetuar_conversao():
     origem_raw = request.form.get("moeda_origem", "1.0|Real|BRL")
     v_origem, n_origem, c_origem = origem_raw.split("|")
     v_origem = float(v_origem)
