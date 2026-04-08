@@ -30,20 +30,27 @@ SIMBOLOS = {
 def buscar_dados_api():
     moedas_busca = "USD-BRL,EUR-BRL,BTC-BRL,GBP-BRL,ARS-BRL,CAD-BRL,JPY-BRL,CHF-BRL"
     url = f"https://economia.awesomeapi.com.br/last/{moedas_busca}"
+
+    # Adicionando um Header para simular um navegador
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=headers, timeout=10)
         dados = response.json()
 
         if not isinstance(dados, dict):
+            print(f"Erro API: Retorno não é dicionário: {dados}")  # Log para o Render
             return [], []
-    except Exception:
+    except Exception as e:
+        print(f"Erro na requisição: {e}")  # Log para o Render
         return [], []
 
     lista_topo = []
     lista_completa = []
 
     for chave, info in dados.items():
-        # Toda a lógica de extração deve ficar dentro da proteção
         if isinstance(info, dict) and "bid" in info:
             valor_venda = float(info["bid"])
             valor_formatado = locale.format_string("%.2f", valor_venda, grouping=True)
