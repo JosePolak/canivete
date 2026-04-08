@@ -53,7 +53,11 @@ def buscar_dados_api():
     for chave, info in dados.items():
         if isinstance(info, dict) and "bid" in info:
             valor_venda = float(info["bid"])
-            valor_formatado = locale.format_string("%.2f", valor_venda, grouping=True)
+            valor_formatado = (
+                f"{valor_venda:,.2f}".replace(",", "X")
+                .replace(".", ",")
+                .replace("X", ".")
+            )
 
             moeda_obj = {
                 "nome": info["name"].split("/")[0],
