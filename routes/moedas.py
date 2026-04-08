@@ -31,26 +31,34 @@ def buscar_dados_api():
     moedas_busca = "USD-BRL,EUR-BRL,BTC-BRL,GBP-BRL,ARS-BRL,CAD-BRL,JPY-BRL,CHF-BRL"
     url = f"https://economia.awesomeapi.com.br/last/{moedas_busca}"
     try:
-        dados = requests.get(url).json()
+        response = requests.get(url)
+        dados = response.json()
+
+        if not isinstance(dados, dict):
+            return [], []
     except Exception:
-        return [], []  # Evita que o app quebre se a API cair
+        return [], []
 
     lista_topo = []
     lista_completa = []
 
-    for _, info in dados.items():
-        valor_venda = float(info["bid"])
-        valor_formatado = locale.format_string("%.2f", valor_venda, grouping=True)
+    for chave, info in dados.items():
+        # Toda a lógica de extração deve ficar dentro da proteção
+        if isinstance(info, dict) and "bid" in info:
+            valor_venda = float(info["bid"])
+            valor_formatado = locale.format_string("%.2f", valor_venda, grouping=True)
 
-        moeda_obj = {
-            "nome": info["name"].split("/")[0],
-            "valor": valor_formatado,
-            "valor_num": valor_venda,
-            "codigo": info["code"],
-        }
-        lista_completa.append(moeda_obj)
-        if info["code"] in ["USD", "EUR", "BTC"]:
-            lista_topo.append(moeda_obj)
+            moeda_obj = {
+                "nome": info["name"].split("/")[0],
+                "valor": valor_formatado,
+                "valor_num": valor_venda,
+                "codigo": info["code"],
+            }
+
+            lista_completa.append(moeda_obj)
+
+            if info["code"] in ["USD", "EUR", "BTC"]:
+                lista_topo.append(moeda_obj)
 
     return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
 
