@@ -1,4 +1,3 @@
-import locale
 import os
 
 import requests
@@ -7,15 +6,7 @@ from flask import Blueprint, redirect, render_template, request, url_for
 from extensions import db
 from models import Historico
 
-chave = os.getenv("HG_API_KEY")
-
 bp_moedas = Blueprint("moedas", __name__)
-
-# Configuração de locale para formatação brasileira
-try:
-    locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-except Exception:
-    locale.setlocale(locale.LC_ALL, "")
 
 SIMBOLOS = {
     "USD": "U$",
@@ -30,8 +21,19 @@ SIMBOLOS = {
 }
 
 
+def formatar_br(valor, casas=2):
+    """Transforma 1000.5 para '1.000,50' sem depender de configurações do sistema."""
+    try:
+        # Cria o padrão americano primeiro (1,000.50)
+        fmt = f"{valor:,.{casas}f}"
+        # Inverte os separadores para o padrão brasileiro
+        return fmt.replace(",", "X").replace(".", ",").replace("X", ".")
+    except (ValueError, TypeError):
+        return "0,00"
+
+
 def buscar_dados_api():
-    chave = "372c713e"
+    chave = os.getenv("HG_API_KEY")
     url = f"https://api.hgbrasil.com/finance?key={chave}"
 
     lista_topo = []
@@ -40,48 +42,27 @@ def buscar_dados_api():
     try:
         response = requests.get(url, timeout=10)
         dados = response.json()
-
-        # Na HG Brasil, dados ficam em results -> currencies
         currencies = dados.get("results", {}).get("currencies", {})
-
-        # Moedas a exibir
         moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
 
         for codigo in moedas_alvo:
             if codigo in currencies:
                 info = currencies[codigo]
-                # HG: 'buy' para valor atual
                 valor_venda = float(info.get("buy", 0))
-
-                # Formatação manual para garantir funcionamento no Render
-                valor_formatado = (
-                    f"{valor_venda:,.2f}".replace(",", "X")
-                    .replace(".", ",")
-                    .replace("X", ".")
-                )
 
                 moeda_obj = {
                     "nome": info.get("name"),
-                    "valor": valor_formatado,
+                    "valor": formatar_br(valor_venda),
                     "valor_num": valor_venda,
                     "codigo": codigo,
                 }
-
                 lista_completa.append(moeda_obj)
-
                 if codigo in ["USD", "EUR", "BTC"]:
                     lista_topo.append(moeda_obj)
-
     except Exception as e:
-        print(f"Erro na HG Brasil: {e}")
-        # Retorna "Indisponível" em vez de um número falso
+        print(f"Erro na API: {e}")
         reserva = [
-            {
-                "nome": "Serviço Indisponível",
-                "valor": "---",
-                "valor_num": 0.0,
-                "codigo": "ERR",
-            }
+            {"nome": "Indisponível", "valor": "---", "valor_num": 0.0, "codigo": "ERR"}
         ]
         return reserva, reserva
 
@@ -109,7 +90,7 @@ def efetuar_conversao():
 
     try:
         valor_raw = request.form.get("valor", "0")
-        # Remove pontos de milhar e troca a vírgula decimal por ponto para o Python entender
+        # Limpa tudo: remove pontos de milhar e converte vírgula em ponto para o Python calcular
         valor_limpo = valor_raw.replace(".", "").replace(",", ".")
         valor_input = float(valor_limpo) if valor_limpo.strip() else 0.0
     except ValueError:
@@ -121,15 +102,16 @@ def efetuar_conversao():
     s_origem = SIMBOLOS.get(c_origem, "$")
     s_destino = SIMBOLOS.get(c_destino, "$")
 
-    fmt_in = "%.8f" if c_origem == "BTC" else "%.2f"
-    fmt_out = "%.8f" if c_destino == "BTC" else "%.2f"
+    casas_in = 8 if c_origem == "BTC" else 2
+    casas_out = 8 if c_destino == "BTC" else 2
 
-    val_in_fmt = locale.format_string(fmt_in, valor_input, grouping=True)
-    res_out_fmt = locale.format_string(fmt_out, resultado_num, grouping=True)
+    # Formatações para a mensagem de texto
+    val_in_fmt = formatar_br(valor_input, casas_in)
+    res_out_fmt = formatar_br(resultado_num, casas_out)
 
     msg = f"{s_origem} {val_in_fmt} ({n_origem}) equivalem a {s_destino} {res_out_fmt} ({n_destino})."
 
-    # Persistência no banco
+    # Salva no Banco de Dados
     nova_consulta = Historico(
         moeda_origem=n_origem,
         moeda_destino=n_destino,
@@ -140,22 +122,19 @@ def efetuar_conversao():
     db.session.commit()
 
     topo, todas = buscar_dados_api()
-    # BUSCA O HISTÓRICO NOVAMENTE PARA O TEMPLATE NÃO FICAR VAZIO
     historico = Historico.query.order_by(Historico.data_hora.desc()).limit(10).all()
 
-    if c_origem == "BTC":
-        valor_para_input = locale.format_string("%.8f", valor_input, grouping=False)
-    else:
-        valor_para_input = locale.format_string("%.2f", valor_input, grouping=False)
+    # AQUI ESTÁ A SOLUÇÃO: Forçamos a vírgula para voltar ao campo de texto (input)
+    valor_para_input = formatar_br(valor_input, casas_in)
 
     return render_template(
         "cotador.html",
         moedas_topo=topo,
         moedas_todas=todas,
-        historico=historico,  # Enviando o histórico atualizado
+        historico=historico,
         resultado=True,
         mensagem_resultado=msg,
-        valor_post=valor_para_input,
+        valor_post=valor_para_input,  # Agora volta como '10.000,00'
         moeda_origem_post=c_origem,
         moeda_destino_post=c_destino,
     )
@@ -164,12 +143,8 @@ def efetuar_conversao():
 @bp_moedas.route("/limpar", methods=["POST"])
 def limpar_historico():
     try:
-        # Deleta todos os registros da tabela Historico no banco de dados
         db.session.query(Historico).delete()
         db.session.commit()
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        print(f"Erro ao limpar histórico: {e}")
-
-    # Redireciona para a rota 'home' deste blueprint (moedas)
     return redirect(url_for("moedas.home"))
