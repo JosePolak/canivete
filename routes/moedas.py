@@ -29,27 +29,20 @@ SIMBOLOS = {
 
 def buscar_dados_api():
     url = "https://economia.awesomeapi.com.br/json/all"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-    }
+    headers = {"User-Agent": "Mozilla/5.0"}
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=5)
         dados = response.json()
-        if not isinstance(dados, dict):
-            return [], []
-    except Exception:
-        return [], []
 
-    lista_topo = []
-    lista_completa = []
-    moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
+        lista_topo = []
+        lista_completa = []
+        moedas_alvo = ["USD", "EUR", "BTC", "GBP", "ARS", "CAD", "JPY", "CHF"]
 
-    for codigo, info in dados.items():
-        if codigo in moedas_alvo:
-            try:
+        for codigo, info in dados.items():
+            if codigo in moedas_alvo:
                 valor_venda = float(info["bid"])
-                # FORMATAÇÃO MANUAL: Evita o erro de locale no servidor
+                # Formatação manual sem locale
                 valor_formatado = (
                     f"{valor_venda:,.2f}".replace(",", "X")
                     .replace(".", ",")
@@ -65,10 +58,27 @@ def buscar_dados_api():
                 lista_completa.append(moeda_obj)
                 if codigo in ["USD", "EUR", "BTC"]:
                     lista_topo.append(moeda_obj)
-            except (KeyError, ValueError):
-                continue
 
-    return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
+        return lista_topo, sorted(lista_completa, key=lambda x: x["nome"])
+
+    except Exception as e:
+        # SE A API FALHAR, O SITE NÃO FICA VAZIO:
+        print(f"DEBUG: Falha na API. Usando dados de reserva. Erro: {e}")
+        reserva = [
+            {
+                "nome": "Dólar (API Offline)",
+                "valor": "0,00",
+                "valor_num": 0.0,
+                "codigo": "USD",
+            },
+            {
+                "nome": "Euro (API Offline)",
+                "valor": "0,00",
+                "valor_num": 0.0,
+                "codigo": "EUR",
+            },
+        ]
+        return reserva, reserva
 
 
 @bp_moedas.route("/")
