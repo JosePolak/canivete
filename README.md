@@ -32,9 +32,13 @@ O primeiro módulo implementado é um conversor de moedas inteligente que consom
 
 3. **Instale as dependências:**
    ```bash
+   pip install -r requirements.txt
+
+4. **Rode o comando**
+   ```bash
    python app.py
 
-4. **Acesse:**
+5. **Acesse:**
 
    Clique em ctrl + http://127.0.0.1:5000
 
