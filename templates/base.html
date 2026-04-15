@@ -6,13 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Canivete - {% block title %}{% endblock %}</title>
 
+    <link rel="icon" type="image/webp" href="{{ url_for('static', filename='img/ico_canivete.webp') }}">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
 </head>
 
 <body>
     <header class="navbar">
         <div class="container">
-            <h1 class="logo">🛠️ Canivete</h1>
+            <h1 class="logo">
+                <img src="{{ url_for('static', filename='img/logo_canivete.webp') }}" alt="Logo Canivete"
+                    style="height: 70px; vertical-align: middle; margin-right: 8px;">
+                <span style="vertical-align: middle;">Canivete</span>
+            </h1>
 
             <button class="menu-toggle" id="menu-btn">
                 <span></span>
