@@ -90,11 +90,26 @@ def efetuar_conversao():
 
     try:
         valor_raw = request.form.get("valor", "0")
-        # Limpa tudo: remove pontos de milhar e converte vírgula em ponto para o Python calcular
         valor_limpo = valor_raw.replace(".", "").replace(",", ".")
         valor_input = float(valor_limpo) if valor_limpo.strip() else 0.0
     except ValueError:
         valor_input = 0.0
+
+    # --- CORREÇÃO: guarda contra divisão por zero ---
+    if v_destino == 0:
+        topo, todas = buscar_dados_api()
+        historico = Historico.query.order_by(Historico.data_hora.desc()).limit(10).all()
+        return render_template(
+            "cotador.html",
+            moedas_topo=topo,
+            moedas_todas=todas,
+            historico=historico,
+            resultado=True,
+            mensagem_resultado="Não foi possível realizar a conversão: cotação da moeda de destino indisponível.",
+            valor_post=valor_raw,
+            moeda_origem_post=c_origem,
+            moeda_destino_post=c_destino,
+        )
 
     valor_em_reais = valor_input * v_origem
     resultado_num = valor_em_reais / v_destino
@@ -124,7 +139,6 @@ def efetuar_conversao():
     topo, todas = buscar_dados_api()
     historico = Historico.query.order_by(Historico.data_hora.desc()).limit(10).all()
 
-    # AQUI ESTÁ A SOLUÇÃO: Forçamos a vírgula para voltar ao campo de texto (input)
     valor_para_input = formatar_br(valor_input, casas_in)
 
     return render_template(
